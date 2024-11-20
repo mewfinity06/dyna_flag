@@ -15,92 +15,96 @@ macro_rules! match_value {
     };
 }
 
+pub mod dyna {
+    use super::*;
 
-pub enum FlagError {
-    NoValue,
-}
+    #[allow(dead_code)]
+    pub enum FlagError {
+        NoValue,
+    }
 
-#[allow(unreachable_patterns)]
-impl Debug for FlagError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::NoValue => {
-                write!(f, "Found no value in Flag")
+    #[allow(unreachable_patterns)]
+    impl Debug for FlagError {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            match self {
+                Self::NoValue => {
+                    write!(f, "Found no value in Flag")
+                }
+                _ => Ok(()),
             }
-            _ => Ok(()),
-        }
-    }
-}
-
-pub struct Flag<'a> {
-    name: &'a str,
-    args: &'a [&'a str],
-    desc: &'a str,
-    notes: Option<&'a str>,
-    value: Option<Box<dyn Any>>,
-}
-
-impl<'a> Debug for Flag<'a> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}\n\t", self.name)?;
-        for arg in self.args {
-            write!(f, "{} ", arg)?;
-        }
-        write!(f, "| {}", self.desc)?;
-        if let Some(notes) = self.notes {
-            write!(f, " | {}", notes)?;
-        }
-        if let Some(value) = self.value.as_ref() {
-            match_value!( value, f,
-                rule = &'static str;
-                rule = &'static i32;
-                rule = &'static f32;
-            )
-        }
-        Ok(())
-    }
-}
-
-
-impl<'a> Flag<'a> {
-    pub fn new(
-        name: &'a str,
-        args: &'a [&'a str],
-        desc: &'a str,
-        notes: Option<&'a str>,
-        value: Option<Box<dyn Any>>,
-    ) -> Self {
-        Self {
-            name,
-            args,
-            desc,
-            notes, // Note examples: `To be deprecated`, `Not implimented`, `Developer use only`
-            value,
         }
     }
 
-    pub fn get_name(&self) -> &'a str {
-        self.name
+    pub struct Flag<'a> {
+        pub name: &'a str,
+        pub args: &'a [&'a str],
+        pub desc: &'a str,
+        pub notes: Option<&'a str>,
+        pub value: Option<Box<dyn Any>>,
     }
 
-    pub fn get_args(&self) -> &'a [&'a str] {
-        self.args
-    }
-
-    pub fn get_value(&self) -> Option<&Box<dyn Any>> {
-        self.value.as_ref()
-    }
-
-    pub fn set_value(&mut self, value: &'static dyn Any) -> Result<(), FlagError> {
-        if self.value.is_none() {
-            return Err(FlagError::NoValue);
+    impl<'a> Debug for Flag<'a> {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(f, "{}\n\t", self.name)?;
+            for arg in self.args {
+                write!(f, "{} ", arg)?;
+            }
+            write!(f, "| {}", self.desc)?;
+            if let Some(notes) = self.notes {
+                write!(f, " | {}", notes)?;
+            }
+            if let Some(value) = self.value.as_ref() {
+                match_value!( value, f,
+                    rule = &'static str;
+                    rule = &'static i32;
+                    rule = &'static f32;
+                )
+            }
+            Ok(())
         }
-        self.value = Some(Box::new(value));
-        Ok(())
     }
 
-    pub fn is_in(&self, s: &str) -> bool {
-        self.args.contains(&s)
+    #[allow(dead_code)]
+    impl<'a> Flag<'a> {
+        pub fn new(
+            name: &'a str,
+            args: &'a [&'a str],
+            desc: &'a str,
+            notes: Option<&'a str>,
+            value: Option<Box<dyn Any>>,
+        ) -> Self {
+            Self {
+                name,
+                args,
+                desc,
+                notes, // Note examples: `To be deprecated`, `Not implimented`, `Developer use only`
+                value,
+            }
+        }
+
+        pub fn get_name(&self) -> &'a str {
+            self.name
+        }
+
+        pub fn get_args(&self) -> &'a [&'a str] {
+            self.args
+        }
+
+        pub fn get_value(&self) -> Option<&Box<dyn Any>> {
+            self.value.as_ref()
+        }
+
+        pub fn set_value(&mut self, value: &'static dyn Any) -> Result<(), FlagError> {
+            if self.value.is_none() {
+                return Err(FlagError::NoValue);
+            }
+            self.value = Some(Box::new(value));
+            Ok(())
+        }
+
+        pub fn is_in(&self, s: &str) -> bool {
+            self.args.contains(&s)
+        }
     }
 }
 
@@ -110,7 +114,7 @@ mod tests {
 
     #[test]
     fn test_flag_creation() {
-        let flag = Flag {
+        let flag = dyna::Flag {
             name: "test",
             args: &["-t", "--test"],
             desc: "A test flag",
@@ -137,7 +141,7 @@ mod tests {
 
     #[test]
     fn test_flag_without_value() {
-        let flag = Flag {
+        let flag = dyna::Flag {
             name: "help",
             args: &["-h", "--help"],
             desc: "Display help information",
@@ -154,7 +158,7 @@ mod tests {
 
     #[test]
     fn test_flag_debug_format() {
-        let flag = Flag {
+        let flag = dyna::Flag {
             name: "output",
             args: &["-o", "--output"],
             desc: "Specify the output file",
@@ -175,7 +179,7 @@ mod tests {
 
     #[test]
     fn test_flag_with_bool_value() {
-        let flag = Flag {
+        let flag = dyna::Flag {
             name: "verbose",
             args: &["-v", "--verbose"],
             desc: "Enable verbose output",
